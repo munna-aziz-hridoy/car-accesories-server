@@ -35,6 +35,14 @@ app.get("/", (req, res) => {
 
 // app listening to the port
 
+// create jwt token
+app.post("/getToken", (req, res) => {
+  const email = req.body.email;
+  const token = jwt.sign(email, process.env.ACCESS_TOKEN);
+
+  res.send({ accessToken: token });
+});
+
 app.listen(port, () => {
   console.log("Server is Running :D");
 });
