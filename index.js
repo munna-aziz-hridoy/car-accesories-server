@@ -33,6 +33,29 @@ app.get("/", (req, res) => {
   res.send({ message: "Server is connected" });
 });
 
+// all collection
+const reviewsCollection = client.db("client").collection("reviews");
+
+// all api
+
+const run = async () => {
+  await client.connect();
+
+  // get all review
+  app.get("/reviews", async (req, res) => {
+    const result = await reviewsCollection.find({}).toArray();
+    res.send(result);
+  });
+
+  //post reviews
+  app.post("/reviews", async (req, res) => {
+    const data = req.body;
+    const result = await reviewsCollection.insertOne(data);
+    res.send(result);
+  });
+};
+run().catch(console.dir);
+
 // app listening to the port
 
 // create jwt token
