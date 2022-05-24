@@ -146,6 +146,12 @@ app.post("/purchaseProduct", async (req, res) => {
   res.send(result);
 });
 
+// get orders
+app.get("/allOrders", async (req, res) => {
+  const orders = await ordersCollection.find({}).toArray();
+  res.send(orders);
+});
+
 // create jwt token
 app.post("/getToken", (req, res) => {
   const email = req.body.email;
