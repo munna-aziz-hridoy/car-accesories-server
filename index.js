@@ -35,6 +35,7 @@ app.get("/", (req, res) => {
 
 // all collection
 const reviewsCollection = client.db("client").collection("reviews");
+const usersCollection = client.db("users").collection("allusers");
 
 // all api
 
@@ -51,6 +52,19 @@ const run = async () => {
   app.post("/reviews", async (req, res) => {
     const data = req.body;
     const result = await reviewsCollection.insertOne(data);
+    res.send(result);
+  });
+
+  // add user api on new registration
+
+  app.put("/addUser", async (req, res) => {
+    const user = req.body;
+    const filter = { email: user.email };
+    const option = { upsert: true };
+    const updateDoc = {
+      $set: user,
+    };
+    const result = await usersCollection.updateOne(filter, updateDoc, option);
     res.send(result);
   });
 };
