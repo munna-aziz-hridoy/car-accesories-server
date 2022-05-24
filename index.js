@@ -4,7 +4,7 @@ const express = require("express");
 const cors = require("cors");
 const jwt = require("jsonwebtoken");
 require("dotenv").config();
-const { MongoClient, ServerApiVersion } = require("mongodb");
+const { MongoClient, ServerApiVersion, ObjectId } = require("mongodb");
 
 const app = express();
 const port = process.env.PORT || 5000;
@@ -110,7 +110,7 @@ const run = async () => {
 };
 run().catch(console.dir);
 
-// get products
+// get all products
 
 app.get("/products", async (req, res) => {
   const limit = parseInt(req.query.limit);
@@ -120,6 +120,14 @@ app.get("/products", async (req, res) => {
   }
   const products = await productsCollection.find({}).limit(limit).toArray();
   res.send(products);
+});
+
+// get one product
+app.get("/singleProduct", async (req, res) => {
+  const id = req.query.id;
+  const filter = { _id: ObjectId(id) };
+  const requestedProduct = await productsCollection.findOne(filter);
+  res.send(requestedProduct);
 });
 
 // create jwt token
