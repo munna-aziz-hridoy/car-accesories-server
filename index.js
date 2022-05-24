@@ -36,6 +36,7 @@ app.get("/", (req, res) => {
 // all collection
 const reviewsCollection = client.db("client").collection("reviews");
 const usersCollection = client.db("users").collection("allusers");
+const productsCollection = client.db("client").collection("products");
 
 // all api
 
@@ -72,7 +73,7 @@ const run = async () => {
   // update user
   app.patch("/updateProfile", async (req, res) => {
     const email = req.query.email;
-    const { address, phone, country } = req.body;
+    const { address, phone, country, image } = req.body;
     const filter = { email };
 
     const updateDoc = {
@@ -80,6 +81,20 @@ const run = async () => {
         address,
         phone,
         country,
+      },
+    };
+    const result = await usersCollection.updateOne(filter, updateDoc);
+    res.send(result);
+  });
+
+  app.patch("/updateProfileImage", async (req, res) => {
+    const email = req.query.email;
+    const { image } = req.body;
+    const filter = { email };
+
+    const updateDoc = {
+      $set: {
+        image,
       },
     };
     const result = await usersCollection.updateOne(filter, updateDoc);
@@ -95,7 +110,17 @@ const run = async () => {
 };
 run().catch(console.dir);
 
-// app listening to the port
+// get products
+
+app.get("/products", async (req, res) => {
+  const limit = parseInt(req.query.limit);
+  if (!limit) {
+    const products = await productsCollection.find({}).toArray();
+    return res.send(products);
+  }
+  const products = await productsCollection.find({}).limit(limit).toArray();
+  res.send(products);
+});
 
 // create jwt token
 app.post("/getToken", (req, res) => {
@@ -105,6 +130,7 @@ app.post("/getToken", (req, res) => {
   res.send({ accessToken: token });
 });
 
+// app listening to the port
 app.listen(port, () => {
   console.log("Server is Running :D");
 });
