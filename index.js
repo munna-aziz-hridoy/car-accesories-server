@@ -59,7 +59,8 @@ const run = async () => {
 
   app.put("/addUser", async (req, res) => {
     const user = req.body;
-    const filter = { email: user.email };
+    const { email } = user;
+    const filter = { email };
     const option = { upsert: true };
     const updateDoc = {
       $set: user,
@@ -67,6 +68,24 @@ const run = async () => {
     const result = await usersCollection.updateOne(filter, updateDoc, option);
     res.send(result);
   });
+
+  app.patch("/updateProfile", async (req, res) => {
+    const email = req.query.email;
+    const { address, phone, country } = req.body;
+    const filter = { email };
+
+    const updateDoc = {
+      $set: {
+        address,
+        phone,
+        country,
+      },
+    };
+    const result = await usersCollection.updateOne(filter, updateDoc);
+    res.send(result);
+  });
+
+  app.get();
 };
 run().catch(console.dir);
 
