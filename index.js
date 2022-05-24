@@ -69,6 +69,7 @@ const run = async () => {
     res.send(result);
   });
 
+  // update user
   app.patch("/updateProfile", async (req, res) => {
     const email = req.query.email;
     const { address, phone, country } = req.body;
@@ -85,7 +86,12 @@ const run = async () => {
     res.send(result);
   });
 
-  app.get();
+  // get one user
+  app.get("/getProfile", async (req, res) => {
+    const email = req.query.email;
+    const user = await usersCollection.findOne({ email });
+    res.send(user);
+  });
 };
 run().catch(console.dir);
 
