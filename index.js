@@ -37,6 +37,7 @@ app.get("/", (req, res) => {
 const reviewsCollection = client.db("client").collection("reviews");
 const usersCollection = client.db("users").collection("allusers");
 const productsCollection = client.db("client").collection("products");
+const ordersCollection = client.db("client").collection("orders");
 
 // all api
 
@@ -87,6 +88,7 @@ const run = async () => {
     res.send(result);
   });
 
+  // update profile picture
   app.patch("/updateProfileImage", async (req, res) => {
     const email = req.query.email;
     const { image } = req.body;
@@ -130,9 +132,17 @@ app.get("/singleProduct", async (req, res) => {
   res.send(requestedProduct);
 });
 
+// add product
 app.post("/addProducts", async (req, res) => {
   const product = req.body;
   const result = await productsCollection.insertOne(product);
+  res.send(result);
+});
+
+// add an order
+app.post("/purchaseProduct", async (req, res) => {
+  const orderedItem = req.body;
+  const result = await ordersCollection.insertOne(orderedItem);
   res.send(result);
 });
 
