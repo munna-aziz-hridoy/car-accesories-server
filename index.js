@@ -130,6 +130,12 @@ app.get("/singleProduct", async (req, res) => {
   res.send(requestedProduct);
 });
 
+app.post("/addProducts", async (req, res) => {
+  const product = req.body;
+  const result = await productsCollection.insertOne(product);
+  res.send(result);
+});
+
 // create jwt token
 app.post("/getToken", (req, res) => {
   const email = req.body.email;
