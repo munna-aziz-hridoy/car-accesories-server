@@ -190,6 +190,37 @@ const run = async () => {
     res.send(requestedOrder);
   });
 
+  app.patch("/updateSignleOrder", async (req, res) => {
+    const transactionId = req.body.transactionId;
+    const id = req.query.id;
+    const filter = { _id: ObjectId(id) };
+    const updatedDoc = {
+      $set: {
+        paid: true,
+        transactionId,
+      },
+    };
+
+    const result = await ordersCollection.updateOne(filter, updatedDoc);
+    res.send(result);
+  });
+
+  app.patch("/updateDeliveryStatus", async (req, res) => {
+    console.log(req.query.email, req.headers.authorization);
+
+    const id = req.body.id;
+
+    const filter = { _id: ObjectId(id) };
+    const updatedDoc = {
+      $set: {
+        deliveryStatus: true,
+      },
+    };
+
+    const result = await ordersCollection.updateOne(filter, updatedDoc);
+    res.send(result);
+  });
+
   // create payment intend
   app.post("/create-payment-intent", async (req, res) => {
     if (!req.body.price || !process.env.STRIPE_SECRET_KEY) {
