@@ -75,11 +75,11 @@ const run = async () => {
 
   const verifyAdmin = async (req, res, next) => {
     const requestedUserEmail = req.query.email;
-    console.log(requestedUserEmail);
+
     const filter = { email: requestedUserEmail };
     const result = await usersCollection.findOne(filter);
-    console.log(result);
-    if (result.role !== "admin") {
+
+    if (result?.role !== "admin") {
       return res
         .status(401)
         .send({ success: false, message: "Unauthorized Access" });
@@ -112,6 +112,11 @@ const run = async () => {
     const updateDoc = {
       $set: user,
     };
+
+    const userExists = await usersCollection.findOne(filter);
+    if (userExists) {
+      return res.send({ message: "user already exists" });
+    }
     const result = await usersCollection.updateOne(filter, updateDoc, option);
     res.send(result);
   });
@@ -156,7 +161,32 @@ const run = async () => {
   });
 
   // get all user
-  app.get("/allUsers");
+  app.get("/allUsers", verifyJWT, verifyAdmin, async (req, res) => {
+    const users = await usersCollection.find({}).toArray();
+
+    res.send(users);
+  });
+
+  // make user admin
+  app.patch("/makeAdmin", verifyJWT, verifyAdmin, async (req, res) => {
+    const id = req.body.id;
+    const filter = { _id: ObjectId(id) };
+    const updatedDoc = {
+      $set: {
+        role: "admin",
+      },
+    };
+    const result = await usersCollection.updateOne(filter, updatedDoc);
+    res.send(result);
+  });
+
+  // delete user
+  app.delete("/deleteOneUser", verifyJWT, verifyAdmin, async (req, res) => {
+    const id = req.query.id;
+    const filter = { _id: ObjectId(id) };
+    const result = await usersCollection.deleteOne(filter);
+    res.send(result);
+  });
 
   // get all products
 
