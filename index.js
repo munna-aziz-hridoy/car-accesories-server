@@ -69,9 +69,22 @@ const run = async () => {
       }
       req.decoded = decoded;
 
-      console.log(decoded.email);
       next();
     });
+  };
+
+  const verifyAdmin = async (req, res, next) => {
+    const requestedUserEmail = req.query.email;
+    console.log(requestedUserEmail);
+    const filter = { email: requestedUserEmail };
+    const result = await usersCollection.findOne(filter);
+    console.log(result);
+    if (result.role !== "admin") {
+      return res
+        .status(401)
+        .send({ success: false, message: "Unauthorized Access" });
+    }
+    next();
   };
 
   await client.connect();
@@ -142,6 +155,9 @@ const run = async () => {
     res.send(user);
   });
 
+  // get all user
+  app.get("/allUsers");
+
   // get all products
 
   app.get("/products", async (req, res) => {
@@ -170,27 +186,35 @@ const run = async () => {
   });
 
   // add an order
-  app.post("/purchaseProduct", async (req, res) => {
+  app.post("/purchaseProduct", verifyJWT, async (req, res) => {
     const orderedItem = req.body;
     const result = await ordersCollection.insertOne(orderedItem);
     res.send(result);
   });
 
-  // get orders
-  app.get("/allOrders", async (req, res) => {
+  // get all orders
+  app.get("/allOrders", verifyJWT, verifyAdmin, async (req, res) => {
     const orders = await ordersCollection.find({}).toArray();
     res.send(orders);
   });
 
+  // get users orders
+  app.get("/UsersOrders", verifyJWT, async (req, res) => {
+    const email = req.decoded.email;
+    const orders = await ordersCollection.find({ email }).toArray();
+    res.send(orders);
+  });
+
   // get one order
-  app.get("/singleOrder", async (req, res) => {
+  app.get("/singleOrder", verifyJWT, async (req, res) => {
     const id = req.query.id;
     const filter = { _id: ObjectId(id) };
     const requestedOrder = await ordersCollection.findOne(filter);
     res.send(requestedOrder);
   });
 
-  app.patch("/updateSignleOrder", async (req, res) => {
+  // update order paid information and transaction id
+  app.patch("/updateSignleOrder", verifyJWT, async (req, res) => {
     const transactionId = req.body.transactionId;
     const id = req.query.id;
     const filter = { _id: ObjectId(id) };
@@ -205,6 +229,7 @@ const run = async () => {
     res.send(result);
   });
 
+  // update Delivery status
   app.patch("/updateDeliveryStatus", async (req, res) => {
     console.log(req.query.email, req.headers.authorization);
 
@@ -216,8 +241,15 @@ const run = async () => {
         deliveryStatus: true,
       },
     };
-
     const result = await ordersCollection.updateOne(filter, updatedDoc);
+    res.send(result);
+  });
+
+  // delete order
+  app.delete("/deleteProduct/:id", async (req, res) => {
+    const id = req.params.id;
+    const filter = { _id: ObjectId(id) };
+    const result = await ordersCollection.deleteOne(filter);
     res.send(result);
   });
 
@@ -236,6 +268,16 @@ const run = async () => {
     res.send({
       clientSecret: paymentIntent.client_secret,
     });
+  });
+
+  // get the admin
+  app.get("/isAdmin", async (req, res) => {
+    const email = req.query.email;
+    const user = await usersCollection.findOne({ email });
+    if (user.role === "admin") {
+      return res.json({ isAdmin: true });
+    }
+    res.json({ isAdmin: false });
   });
 
   // create jwt token
