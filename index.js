@@ -41,8 +41,39 @@ const productsCollection = client.db("client").collection("products");
 const ordersCollection = client.db("client").collection("orders");
 
 // all api
-
 const run = async () => {
+  // verify JWT token
+  const verifyJWT = (req, res, next) => {
+    const clientToken = req.headers.authorization;
+    const requrestedUserEmail = req.query.email;
+    console.log(requrestedUserEmail, clientToken);
+
+    if (!clientToken) {
+      return res
+        .status(401)
+        .send({ success: false, message: "Unauthorized Access" });
+    }
+
+    const token = clientToken.split(" ")[1];
+    jwt.verify(token, process.env.ACCESS_TOKEN, (err, decoded) => {
+      if (err) {
+        return res
+          .status(403)
+          .send({ success: false, message: "Forbidden Access" });
+      }
+      if (requrestedUserEmail !== decoded.email) {
+        console.log(requrestedUserEmail, decoded.email);
+        return res
+          .status(401)
+          .send({ success: false, message: "Unauthorized Access" });
+      }
+      req.decoded = decoded;
+
+      console.log(decoded.email);
+      next();
+    });
+  };
+
   await client.connect();
 
   // get all review
@@ -73,9 +104,9 @@ const run = async () => {
   });
 
   // update user
-  app.patch("/updateProfile", async (req, res) => {
+  app.patch("/updateProfile", verifyJWT, async (req, res) => {
     const email = req.query.email;
-    const { address, phone, country, image } = req.body;
+    const { address, phone, country } = req.body;
     const filter = { email };
 
     const updateDoc = {
@@ -90,7 +121,7 @@ const run = async () => {
   });
 
   // update profile picture
-  app.patch("/updateProfileImage", async (req, res) => {
+  app.patch("/updateProfileImage", verifyJWT, async (req, res) => {
     const email = req.query.email;
     const { image } = req.body;
     const filter = { email };
@@ -105,7 +136,7 @@ const run = async () => {
   });
 
   // get one user
-  app.get("/getProfile", async (req, res) => {
+  app.get("/getProfile", verifyJWT, async (req, res) => {
     const email = req.query.email;
     const user = await usersCollection.findOne({ email });
     res.send(user);
@@ -124,7 +155,7 @@ const run = async () => {
   });
 
   // get one product
-  app.get("/singleProduct", async (req, res) => {
+  app.get("/singleProduct", verifyJWT, async (req, res) => {
     const id = req.query.id;
     const filter = { _id: ObjectId(id) };
     const requestedProduct = await productsCollection.findOne(filter);
@@ -132,7 +163,7 @@ const run = async () => {
   });
 
   // add product
-  app.post("/addProducts", async (req, res) => {
+  app.post("/addProducts", verifyJWT, async (req, res) => {
     const product = req.body;
     const result = await productsCollection.insertOne(product);
     res.send(result);
@@ -179,7 +210,7 @@ const run = async () => {
   // create jwt token
   app.post("/getToken", (req, res) => {
     const email = req.body.email;
-    const token = jwt.sign(email, process.env.ACCESS_TOKEN);
+    const token = jwt.sign({ email }, process.env.ACCESS_TOKEN);
 
     res.send({ accessToken: token });
   });
