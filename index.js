@@ -5,6 +5,7 @@ const cors = require("cors");
 const jwt = require("jsonwebtoken");
 require("dotenv").config();
 const { MongoClient, ServerApiVersion, ObjectId } = require("mongodb");
+const stripe = require("stripe")(process.env.STRIPE_SECRET_KEY);
 
 const app = express();
 const port = process.env.PORT || 5000;
@@ -109,56 +110,81 @@ const run = async () => {
     const user = await usersCollection.findOne({ email });
     res.send(user);
   });
+
+  // get all products
+
+  app.get("/products", async (req, res) => {
+    const limit = parseInt(req.query.limit);
+    if (!limit) {
+      const products = await productsCollection.find({}).toArray();
+      return res.send(products);
+    }
+    const products = await productsCollection.find({}).limit(limit).toArray();
+    res.send(products);
+  });
+
+  // get one product
+  app.get("/singleProduct", async (req, res) => {
+    const id = req.query.id;
+    const filter = { _id: ObjectId(id) };
+    const requestedProduct = await productsCollection.findOne(filter);
+    res.send(requestedProduct);
+  });
+
+  // add product
+  app.post("/addProducts", async (req, res) => {
+    const product = req.body;
+    const result = await productsCollection.insertOne(product);
+    res.send(result);
+  });
+
+  // add an order
+  app.post("/purchaseProduct", async (req, res) => {
+    const orderedItem = req.body;
+    const result = await ordersCollection.insertOne(orderedItem);
+    res.send(result);
+  });
+
+  // get orders
+  app.get("/allOrders", async (req, res) => {
+    const orders = await ordersCollection.find({}).toArray();
+    res.send(orders);
+  });
+
+  // get one order
+  app.get("/singleOrder", async (req, res) => {
+    const id = req.query.id;
+    const filter = { _id: ObjectId(id) };
+    const requestedOrder = await ordersCollection.findOne(filter);
+    res.send(requestedOrder);
+  });
+
+  // create payment intend
+  app.post("/create-payment-intent", async (req, res) => {
+    if (!req.body.price || !process.env.STRIPE_SECRET_KEY) {
+      return;
+    }
+    const price = parseFloat(req.body.price) * 100;
+
+    const paymentIntent = await stripe.paymentIntents.create({
+      amount: price,
+      currency: "usd",
+    });
+
+    res.send({
+      clientSecret: paymentIntent.client_secret,
+    });
+  });
+
+  // create jwt token
+  app.post("/getToken", (req, res) => {
+    const email = req.body.email;
+    const token = jwt.sign(email, process.env.ACCESS_TOKEN);
+
+    res.send({ accessToken: token });
+  });
 };
 run().catch(console.dir);
-
-// get all products
-
-app.get("/products", async (req, res) => {
-  const limit = parseInt(req.query.limit);
-  if (!limit) {
-    const products = await productsCollection.find({}).toArray();
-    return res.send(products);
-  }
-  const products = await productsCollection.find({}).limit(limit).toArray();
-  res.send(products);
-});
-
-// get one product
-app.get("/singleProduct", async (req, res) => {
-  const id = req.query.id;
-  const filter = { _id: ObjectId(id) };
-  const requestedProduct = await productsCollection.findOne(filter);
-  res.send(requestedProduct);
-});
-
-// add product
-app.post("/addProducts", async (req, res) => {
-  const product = req.body;
-  const result = await productsCollection.insertOne(product);
-  res.send(result);
-});
-
-// add an order
-app.post("/purchaseProduct", async (req, res) => {
-  const orderedItem = req.body;
-  const result = await ordersCollection.insertOne(orderedItem);
-  res.send(result);
-});
-
-// get orders
-app.get("/allOrders", async (req, res) => {
-  const orders = await ordersCollection.find({}).toArray();
-  res.send(orders);
-});
-
-// create jwt token
-app.post("/getToken", (req, res) => {
-  const email = req.body.email;
-  const token = jwt.sign(email, process.env.ACCESS_TOKEN);
-
-  res.send({ accessToken: token });
-});
 
 // app listening to the port
 app.listen(port, () => {
