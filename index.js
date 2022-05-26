@@ -295,7 +295,7 @@ const run = async () => {
     });
 
     // delete order
-    app.delete("/deleteOneProduct", verifyJWT, async (req, res) => {
+    app.delete("/deleteOneOrder", verifyJWT, async (req, res) => {
       const id = req.query.id;
 
       const filter = { _id: ObjectId(id) };
