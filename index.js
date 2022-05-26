@@ -46,7 +46,6 @@ const run = async () => {
   const verifyJWT = (req, res, next) => {
     const clientToken = req.headers.authorization;
     const requrestedUserEmail = req.query.email;
-    console.log(requrestedUserEmail, clientToken);
 
     if (!clientToken) {
       return res
@@ -62,7 +61,6 @@ const run = async () => {
           .send({ success: false, message: "Forbidden Access" });
       }
       if (requrestedUserEmail !== decoded.email) {
-        console.log(requrestedUserEmail, decoded.email);
         return res
           .status(401)
           .send({ success: false, message: "Unauthorized Access" });
@@ -277,8 +275,6 @@ const run = async () => {
 
   // update Delivery status
   app.patch("/updateDeliveryStatus", async (req, res) => {
-    console.log(req.query.email, req.headers.authorization);
-
     const id = req.body.id;
     const filter = { _id: ObjectId(id) };
     const updatedDoc = {
@@ -293,7 +289,7 @@ const run = async () => {
   // delete order
   app.delete("/deleteOneProduct", verifyJWT, async (req, res) => {
     const id = req.query.id;
-    console.log(id);
+
     const filter = { _id: ObjectId(id) };
     const result = await ordersCollection.deleteOne(filter);
     res.send(result);
