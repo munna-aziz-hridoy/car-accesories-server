@@ -215,6 +215,14 @@ const run = async () => {
     res.send(result);
   });
 
+  // delete one product
+  app.delete("/deleteOneProduct", verifyJWT, verifyAdmin, async (req, res) => {
+    const id = req.query.id;
+    const filter = { _id: ObjectId(id) };
+    const result = await productsCollection.deleteOne(filter);
+    res.send(result);
+  });
+
   // add an order
   app.post("/purchaseProduct", verifyJWT, async (req, res) => {
     const orderedItem = req.body;
@@ -232,6 +240,14 @@ const run = async () => {
   app.get("/UsersOrders", verifyJWT, async (req, res) => {
     const email = req.decoded.email;
     const orders = await ordersCollection.find({ email }).toArray();
+    res.send(orders);
+  });
+
+  // get paid orders
+  app.get("/UsersPaidOrders", verifyJWT, async (req, res) => {
+    const email = req.decoded.email;
+
+    const orders = await ordersCollection.find({ email, paid: true }).toArray();
     res.send(orders);
   });
 
@@ -275,8 +291,9 @@ const run = async () => {
   });
 
   // delete order
-  app.delete("/deleteOneProduct", async (req, res) => {
+  app.delete("/deleteOneProduct", verifyJWT, async (req, res) => {
     const id = req.query.id;
+    console.log(id);
     const filter = { _id: ObjectId(id) };
     const result = await ordersCollection.deleteOne(filter);
     res.send(result);
