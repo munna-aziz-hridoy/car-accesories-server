@@ -264,7 +264,6 @@ const run = async () => {
     console.log(req.query.email, req.headers.authorization);
 
     const id = req.body.id;
-
     const filter = { _id: ObjectId(id) };
     const updatedDoc = {
       $set: {
@@ -276,8 +275,8 @@ const run = async () => {
   });
 
   // delete order
-  app.delete("/deleteProduct/:id", async (req, res) => {
-    const id = req.params.id;
+  app.delete("/deleteOneProduct", async (req, res) => {
+    const id = req.query.id;
     const filter = { _id: ObjectId(id) };
     const result = await ordersCollection.deleteOne(filter);
     res.send(result);
